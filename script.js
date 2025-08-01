@@ -128,4 +128,29 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => ripple.remove(), 600);
         });
     });
+    
+    // Meta Pixel - Rastrear cliques no WhatsApp
+    document.querySelectorAll('.cta-whatsapp, .cta-last').forEach(button => {
+        button.addEventListener('click', function() {
+            if (typeof fbq !== 'undefined') {
+                fbq('track', 'Contact', {
+                    content_name: 'WhatsApp Click',
+                    content_category: 'neuraltenis',
+                    value: button.classList.contains('cta-last') ? 'FAQ' : 'Main'
+                });
+            }
+        });
+    });
+    
+    // Rastrear tempo na página (engagement)
+    let timeSpent = 0;
+    setInterval(() => {
+        timeSpent += 5;
+        if (timeSpent === 30 && typeof fbq !== 'undefined') {
+            fbq('track', 'ViewContent', {
+                content_name: '30 seconds on page',
+                content_category: 'engagement'
+            });
+        }
+    }, 5000);
 });
