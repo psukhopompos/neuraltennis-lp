@@ -129,17 +129,97 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Meta Pixel - Rastrear cliques no WhatsApp
+    // Meta Pixel - Rastrear cliques no WhatsApp com valores dinâmicos
     document.querySelectorAll('.cta-whatsapp, .cta-last').forEach(button => {
+        // Determinar valor baseado no contexto do botão
+        let value = 800; // valor padrão uma sessão
+        if (button.closest('.pricing')) {
+            value = 1400; // se clicou da seção de preços, assume interesse no pacote
+        }
+        
         button.addEventListener('click', function() {
             if (typeof fbq !== 'undefined') {
+                // Lead - qualquer clique em CTA
+                fbq('track', 'Lead', {
+                    content_name: 'CTA Click',
+                    content_category: 'neuraltennis'
+                });
+                
+                // Contact com valor
                 fbq('track', 'Contact', {
                     content_name: 'WhatsApp Click',
-                    content_category: 'neuraltennis',
-                    value: button.classList.contains('cta-last') ? 'FAQ' : 'Main'
+                    content_category: button.classList.contains('cta-last') ? 'FAQ' : 'Main',
+                    value: value,
+                    currency: 'BRL'
                 });
             }
         });
+        
+        // InitiateCheckout ao passar mouse no botão
+        button.addEventListener('mouseenter', function() {
+            if (typeof fbq !== 'undefined' && !button.dataset.hovered) {
+                button.dataset.hovered = 'true';
+                fbq('track', 'InitiateCheckout', {
+                    content_name: 'WhatsApp Hover',
+                    value: value,
+                    currency: 'BRL'
+                });
+            }
+        });
+    });
+    
+    // AddToCart quando visualiza preços
+    const pricingSection = document.querySelector('.section-urgency');
+    if (pricingSection) {
+        const pricingObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && typeof fbq !== 'undefined') {
+                    fbq('track', 'AddToCart', {
+                        content_name: 'Viewed Pricing',
+                        content_ids: ['sessao_unica', 'pacote_duplo'],
+                        contents: [
+                            {id: 'sessao_unica', quantity: 1, price: 800},
+                            {id: 'pacote_duplo', quantity: 1, price: 1400}
+                        ],
+                        value: 1400, // mostra o valor maior
+                        currency: 'BRL'
+                    });
+                    pricingObserver.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+        pricingObserver.observe(pricingSection);
+    }
+    
+    // Rastrear scroll depth
+    let maxScroll = 0;
+    window.addEventListener('scroll', () => {
+        const scrollPercentage = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+        
+        if (scrollPercentage > maxScroll) {
+            maxScroll = scrollPercentage;
+            
+            // Rastrear marcos de 50% e 90%
+            if (maxScroll > 50 && !window.scrollTracked50) {
+                window.scrollTracked50 = true;
+                if (typeof fbq !== 'undefined') {
+                    fbq('trackCustom', 'ScrollDepth', {
+                        depth: '50%',
+                        content_name: 'Half Page Viewed'
+                    });
+                }
+            }
+            
+            if (maxScroll > 90 && !window.scrollTracked90) {
+                window.scrollTracked90 = true;
+                if (typeof fbq !== 'undefined') {
+                    fbq('trackCustom', 'ScrollDepth', {
+                        depth: '90%',
+                        content_name: 'Full Page Viewed'
+                    });
+                }
+            }
+        }
     });
     
     // Rastrear tempo na página (engagement)
@@ -149,7 +229,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (timeSpent === 30 && typeof fbq !== 'undefined') {
             fbq('track', 'ViewContent', {
                 content_name: '30 seconds on page',
-                content_category: 'engagement'
+                content_category: 'engagement',
+                value: 0.5, // valor simbólico para engagement
+                currency: 'BRL'
             });
         }
     }, 5000);
