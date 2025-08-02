@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof fbq !== 'undefined') {
                 fbq('track', 'Contact', {
                     content_name: 'WhatsApp Click',
-                    content_category: 'neuraltenis',
+                    content_category: 'neuraltennis',
                     value: button.classList.contains('cta-last') ? 'FAQ' : 'Main'
                 });
             }
